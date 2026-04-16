@@ -146,18 +146,19 @@ html, body {
 .btn-circle:active { transform: scale(0.92); }
 
 .btn-icon-img {
-  width: 38px; height: 38px;
+  width: 52px; height: 52px;
   object-fit: contain;
   cursor: pointer;
   transition: transform 0.15s;
-  padding: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.28);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.38);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   box-sizing: content-box;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.25));
 }
 .btn-icon-img:active { transform: scale(0.92); }
 
@@ -993,6 +994,8 @@ html, body {
 </div><!-- /phone-frame -->
 
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 // ── MAP ──────────────────────────────────────────
 maptilersdk.config.apiKey = 'gSXSPkeM3926xJRmw1X3';
@@ -1173,6 +1176,86 @@ map.on('load', () => {
       }
     } catch(_) {}
   });
+
+  // ── 3D MODELS (GLB) ─────────────────────────────────
+  // Добавь сюда свои точки с моделями:
+  //  - `model`: путь (для сервера это обычно `models/<file>.glb`)
+  //  - `scale`: множитель к базовому масштабу "под карту"
+  //  - `rotationDeg`: [x, y, z] в градусах
+  //  - `altitude`: высота в "условных метрах" (обычно 0)
+  const modelPOIs = [
+    // Пример:
+    // { lat: 58.0135, lng: 56.2390, model: 'models/example-1.glb', scale: 1, rotationDeg: [0, 0, 0], altitude: 0 },
+  ];
+
+  const modelLayer = {
+    id: 'poi-3d-models',
+    type: 'custom',
+    renderingMode: '3d',
+    onAdd(map, gl) {
+      this.camera = new THREE.Camera();
+      this.scene = new THREE.Scene();
+      this._matrix = new THREE.Matrix4();
+
+      // Рендерим в контекст MapTiler (webgl canvas).
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: gl.canvas,
+        context: gl,
+        antialias: true,
+        alpha: true,
+      });
+      this.renderer.autoClear = false;
+
+      // Простое освещение, чтобы материалы GLB читались.
+      this.scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.95);
+      dir.position.set(100, 200, 100);
+      this.scene.add(dir);
+
+      const loader = new THREE.GLTFLoader();
+      loader.setCrossOrigin('anonymous');
+
+      modelPOIs.forEach((poi) => {
+        if (!poi?.model) return;
+
+        loader.load(
+          poi.model,
+          (gltf) => {
+            const obj = gltf.scene;
+
+            const altitude = poi.altitude ?? 0;
+            const mc = maptilersdk.MercatorCoordinate.fromLngLat([poi.lng, poi.lat], altitude);
+
+            const baseScale = mc.meterInMercatorCoordinateUnits();
+            const scaleMul = poi.scale ?? 1;
+            obj.scale.setScalar(baseScale * scaleMul);
+            obj.position.set(mc.x, mc.y, mc.z);
+
+            const r = poi.rotationDeg || [0, 0, 0];
+            const toRad = (d) => (d * Math.PI) / 180;
+            obj.rotateX(toRad(r[0] || 0));
+            obj.rotateY(toRad(r[1] || 0));
+            obj.rotateZ(toRad(r[2] || 0));
+
+            this.scene.add(obj);
+          },
+          undefined,
+          (err) => {
+            console.error('GLB load failed:', poi.model, err);
+          }
+        );
+      });
+    },
+    render(gl, matrix) {
+      this._matrix.fromArray(matrix);
+      this.camera.projectionMatrix = this._matrix;
+
+      if (this.renderer) this.renderer.resetState();
+      this.renderer.render(this.scene, this.camera);
+    }
+  };
+
+  map.addLayer(modelLayer);
 });
 
 // ── PLACES ───────────────────────────────────────
