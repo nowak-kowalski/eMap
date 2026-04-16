@@ -1,0 +1,6 @@
+*.psd
+.DS_Store
+
+# Local/agent state (should not be committed)
+.claude/
+
