@@ -1000,6 +1000,10 @@ html, body {
 // ── MAP ──────────────────────────────────────────
 maptilersdk.config.apiKey = 'gSXSPkeM3926xJRmw1X3';
 
+// Загружаем текстуру заранее (глобально, чтобы не собрал GC)
+const wavesImg = new Image();
+wavesImg.src = 'images/waves.jpg';
+
 const map = new maptilersdk.Map({
   container: 'map',
   style: maptilersdk.MapStyle.PASTEL,
@@ -1020,8 +1024,8 @@ map.on('load', () => {
   const P = {
     land:       '#FDEBD0',   // самый светлый — основа, земля
     land_sub:   '#FDEBD0',   // кварталы — тот же тон
-    water:      '#F7CAC9',   // вода — чуть розовее земли
-    waterway:   '#F7CAC9',   // реки
+    water:      '#7EC8E3',   // вода — голубой (тест)
+    waterway:   '#5BAED0',   // реки
     park:       '#F7CAC9',   // парки — тот же светлый розовый
     forest:     '#F7CAC9',   // леса
     building:   '#FDEBD0',   // здания — сливаются с землёй, тихо
@@ -1166,14 +1170,7 @@ map.on('load', () => {
           map.setPaintProperty(layer.id, 'text-halo-width', 1.5);
         }
       }
-      // Все остальные symbol-слои — тоже фильтруем имя на всякий случай
-      else if (layer.type === 'symbol') {
-        const existing = map.getFilter(layer.id);
-        const noNames  = HIDE_NAMES.map(n => ['!=', ['get', 'name'], n]);
-        map.setFilter(layer.id, existing
-          ? ['all', existing, ...noNames]
-          : ['all', ...noNames]);
-      }
+      // Остальные symbol-слои не трогаем — их фильтры несовместимы с простым merge
     } catch(_) {}
   });
 
@@ -1193,11 +1190,11 @@ map.on('load', () => {
     type: 'custom',
     renderingMode: '3d',
     onAdd(map, gl) {
+      if (modelPOIs.length === 0) return;
       this.camera = new THREE.Camera();
       this.scene = new THREE.Scene();
       this._matrix = new THREE.Matrix4();
 
-      // Рендерим в контекст MapTiler (webgl canvas).
       this.renderer = new THREE.WebGLRenderer({
         canvas: gl.canvas,
         context: gl,
@@ -1206,7 +1203,6 @@ map.on('load', () => {
       });
       this.renderer.autoClear = false;
 
-      // Простое освещение, чтобы материалы GLB читались.
       this.scene.add(new THREE.AmbientLight(0xffffff, 0.75));
       const dir = new THREE.DirectionalLight(0xffffff, 0.95);
       dir.position.set(100, 200, 100);
@@ -1247,15 +1243,38 @@ map.on('load', () => {
       });
     },
     render(gl, matrix) {
+      if (!this.renderer) return;
       this._matrix.fromArray(matrix);
       this.camera.projectionMatrix = this._matrix;
-
-      if (this.renderer) this.renderer.resetState();
+      this.renderer.resetState();
       this.renderer.render(this.scene, this.camera);
     }
   };
 
   map.addLayer(modelLayer);
+
+  // ── WATER TEXTURE ────────────────────────────────
+  map.once('idle', () => {
+    fetch('images/waves.jpg')
+      .then(r => r.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(bitmap => {
+        if (map.hasImage('water-wave')) map.removeImage('water-wave');
+        map.addImage('water-wave', bitmap);
+        map.setLayoutProperty('Water', 'visibility', 'none');
+        map.setLayoutProperty('Water intermittent', 'visibility', 'none');
+        if (!map.getLayer('water-texture-layer')) {
+          map.addLayer({
+            id: 'water-texture-layer',
+            type: 'fill',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            paint: { 'fill-pattern': 'water-wave' }
+          });
+        }
+      })
+      .catch(e => console.error('water texture error:', e));
+  });
 });
 
 // ── PLACES ───────────────────────────────────────
