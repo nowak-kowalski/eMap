@@ -1208,39 +1208,27 @@ map.on('load', () => {
       dir.position.set(100, 200, 100);
       this.scene.add(dir);
 
-      const loader = new THREE.GLTFLoader();
-      loader.setCrossOrigin('anonymous');
+      // ── Волна над Камой ──────────────────────────
 
-      modelPOIs.forEach((poi) => {
-        if (!poi?.model) return;
-
-        loader.load(
-          poi.model,
-          (gltf) => {
+      // ── GLB модели (если есть) ───────────────────
+      if (modelPOIs.length > 0) {
+        const loader = new THREE.GLTFLoader();
+        loader.setCrossOrigin('anonymous');
+        modelPOIs.forEach((poi) => {
+          if (!poi?.model) return;
+          loader.load(poi.model, (gltf) => {
             const obj = gltf.scene;
-
-            const altitude = poi.altitude ?? 0;
-            const mc = maptilersdk.MercatorCoordinate.fromLngLat([poi.lng, poi.lat], altitude);
-
-            const baseScale = mc.meterInMercatorCoordinateUnits();
-            const scaleMul = poi.scale ?? 1;
-            obj.scale.setScalar(baseScale * scaleMul);
+            const mc = maptilersdk.MercatorCoordinate.fromLngLat([poi.lng, poi.lat], poi.altitude ?? 0);
+            const s = mc.meterInMercatorCoordinateUnits();
+            obj.scale.setScalar(s * (poi.scale ?? 1));
             obj.position.set(mc.x, mc.y, mc.z);
-
             const r = poi.rotationDeg || [0, 0, 0];
             const toRad = (d) => (d * Math.PI) / 180;
-            obj.rotateX(toRad(r[0] || 0));
-            obj.rotateY(toRad(r[1] || 0));
-            obj.rotateZ(toRad(r[2] || 0));
-
+            obj.rotateX(toRad(r[0])); obj.rotateY(toRad(r[1])); obj.rotateZ(toRad(r[2]));
             this.scene.add(obj);
-          },
-          undefined,
-          (err) => {
-            console.error('GLB load failed:', poi.model, err);
-          }
-        );
-      });
+          }, undefined, (err) => console.error('GLB load failed:', poi.model, err));
+        });
+      }
     },
     render(gl, matrix) {
       if (!this.renderer) return;
@@ -1255,6 +1243,7 @@ map.on('load', () => {
 
   // ── WATER TEXTURE ────────────────────────────────
   map.once('idle', () => {
+    // ── Текстура воды ──────────────────────────────
     fetch('images/waves.jpg')
       .then(r => r.blob())
       .then(blob => createImageBitmap(blob))
@@ -1263,14 +1252,55 @@ map.on('load', () => {
         map.addImage('water-wave', bitmap);
         map.setLayoutProperty('Water', 'visibility', 'none');
         map.setLayoutProperty('Water intermittent', 'visibility', 'none');
+        // Вставляем перед первым дорожным слоем чтобы мосты были поверх
+        const firstRoadLayer = map.getStyle().layers.find(l => {
+            const sl = (l['source-layer'] || '').toLowerCase();
+            const id = l.id.toLowerCase();
+            return sl === 'transportation' || id === 'road' || id.includes('bridge') || id.includes('tunnel');
+          });
+
+        const BIG_WATER = ['in', ['get', 'class'], ['literal', ['river', 'lake', 'ocean', 'reservoir']]];
+        const SMALL_WATER = ['!', BIG_WATER];
+
+        // Маленькие водоёмы — просто синий
+        if (!map.getLayer('water-small')) {
+          map.addLayer({
+            id: 'water-small',
+            type: 'fill',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            filter: SMALL_WATER,
+            paint: { 'fill-color': '#7EC8E3', 'fill-opacity': 1 }
+          }, firstRoadLayer?.id);
+        }
+
+        // Тень у берега — только большая вода
+        if (!map.getLayer('water-shore-shadow')) {
+          map.addLayer({
+            id: 'water-shore-shadow',
+            type: 'line',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            filter: BIG_WATER,
+            minzoom: 12,
+            paint: {
+              'line-color': 'rgba(0, 20, 40, 0.35)',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 15, 14],
+              'line-blur':  ['interpolate', ['linear'], ['zoom'], 12, 3, 15, 10],
+            }
+          }, firstRoadLayer?.id);
+        }
+
+        // Текстура — только большая вода
         if (!map.getLayer('water-texture-layer')) {
           map.addLayer({
             id: 'water-texture-layer',
             type: 'fill',
             source: 'maptiler_planet',
             'source-layer': 'water',
+            filter: BIG_WATER,
             paint: { 'fill-pattern': 'water-wave' }
-          });
+          }, firstRoadLayer?.id);
         }
       })
       .catch(e => console.error('water texture error:', e));
