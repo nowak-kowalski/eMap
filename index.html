@@ -1000,6 +1000,10 @@ html, body {
 // ── MAP ──────────────────────────────────────────
 maptilersdk.config.apiKey = 'gSXSPkeM3926xJRmw1X3';
 
+// Загружаем текстуру заранее (глобально, чтобы не собрал GC)
+const wavesImg = new Image();
+wavesImg.src = 'images/waves.jpg';
+
 const map = new maptilersdk.Map({
   container: 'map',
   style: maptilersdk.MapStyle.PASTEL,
@@ -1020,8 +1024,8 @@ map.on('load', () => {
   const P = {
     land:       '#FDEBD0',   // самый светлый — основа, земля
     land_sub:   '#FDEBD0',   // кварталы — тот же тон
-    water:      '#F7CAC9',   // вода — чуть розовее земли
-    waterway:   '#F7CAC9',   // реки
+    water:      '#7EC8E3',   // вода — голубой (тест)
+    waterway:   '#5BAED0',   // реки
     park:       '#F7CAC9',   // парки — тот же светлый розовый
     forest:     '#F7CAC9',   // леса
     building:   '#FDEBD0',   // здания — сливаются с землёй, тихо
@@ -1166,14 +1170,7 @@ map.on('load', () => {
           map.setPaintProperty(layer.id, 'text-halo-width', 1.5);
         }
       }
-      // Все остальные symbol-слои — тоже фильтруем имя на всякий случай
-      else if (layer.type === 'symbol') {
-        const existing = map.getFilter(layer.id);
-        const noNames  = HIDE_NAMES.map(n => ['!=', ['get', 'name'], n]);
-        map.setFilter(layer.id, existing
-          ? ['all', existing, ...noNames]
-          : ['all', ...noNames]);
-      }
+      // Остальные symbol-слои не трогаем — их фильтры несовместимы с простым merge
     } catch(_) {}
   });
 
@@ -1197,7 +1194,6 @@ map.on('load', () => {
       this.scene = new THREE.Scene();
       this._matrix = new THREE.Matrix4();
 
-      // Рендерим в контекст MapTiler (webgl canvas).
       this.renderer = new THREE.WebGLRenderer({
         canvas: gl.canvas,
         context: gl,
@@ -1206,56 +1202,109 @@ map.on('load', () => {
       });
       this.renderer.autoClear = false;
 
-      // Простое освещение, чтобы материалы GLB читались.
       this.scene.add(new THREE.AmbientLight(0xffffff, 0.75));
       const dir = new THREE.DirectionalLight(0xffffff, 0.95);
       dir.position.set(100, 200, 100);
       this.scene.add(dir);
 
-      const loader = new THREE.GLTFLoader();
-      loader.setCrossOrigin('anonymous');
+      // ── Волна над Камой ──────────────────────────
 
-      modelPOIs.forEach((poi) => {
-        if (!poi?.model) return;
-
-        loader.load(
-          poi.model,
-          (gltf) => {
+      // ── GLB модели (если есть) ───────────────────
+      if (modelPOIs.length > 0) {
+        const loader = new THREE.GLTFLoader();
+        loader.setCrossOrigin('anonymous');
+        modelPOIs.forEach((poi) => {
+          if (!poi?.model) return;
+          loader.load(poi.model, (gltf) => {
             const obj = gltf.scene;
-
-            const altitude = poi.altitude ?? 0;
-            const mc = maptilersdk.MercatorCoordinate.fromLngLat([poi.lng, poi.lat], altitude);
-
-            const baseScale = mc.meterInMercatorCoordinateUnits();
-            const scaleMul = poi.scale ?? 1;
-            obj.scale.setScalar(baseScale * scaleMul);
+            const mc = maptilersdk.MercatorCoordinate.fromLngLat([poi.lng, poi.lat], poi.altitude ?? 0);
+            const s = mc.meterInMercatorCoordinateUnits();
+            obj.scale.setScalar(s * (poi.scale ?? 1));
             obj.position.set(mc.x, mc.y, mc.z);
-
             const r = poi.rotationDeg || [0, 0, 0];
             const toRad = (d) => (d * Math.PI) / 180;
-            obj.rotateX(toRad(r[0] || 0));
-            obj.rotateY(toRad(r[1] || 0));
-            obj.rotateZ(toRad(r[2] || 0));
-
+            obj.rotateX(toRad(r[0])); obj.rotateY(toRad(r[1])); obj.rotateZ(toRad(r[2]));
             this.scene.add(obj);
-          },
-          undefined,
-          (err) => {
-            console.error('GLB load failed:', poi.model, err);
-          }
-        );
-      });
+          }, undefined, (err) => console.error('GLB load failed:', poi.model, err));
+        });
+      }
     },
     render(gl, matrix) {
+      if (!this.renderer) return;
       this._matrix.fromArray(matrix);
       this.camera.projectionMatrix = this._matrix;
-
-      if (this.renderer) this.renderer.resetState();
+      this.renderer.resetState();
       this.renderer.render(this.scene, this.camera);
     }
   };
 
   map.addLayer(modelLayer);
+
+  // ── WATER TEXTURE ────────────────────────────────
+  map.once('idle', () => {
+    // ── Текстура воды ──────────────────────────────
+    fetch('images/waves.jpg')
+      .then(r => r.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(bitmap => {
+        if (map.hasImage('water-wave')) map.removeImage('water-wave');
+        map.addImage('water-wave', bitmap);
+        map.setLayoutProperty('Water', 'visibility', 'none');
+        map.setLayoutProperty('Water intermittent', 'visibility', 'none');
+        // Вставляем перед первым дорожным слоем чтобы мосты были поверх
+        const firstRoadLayer = map.getStyle().layers.find(l => {
+            const sl = (l['source-layer'] || '').toLowerCase();
+            const id = l.id.toLowerCase();
+            return sl === 'transportation' || id === 'road' || id.includes('bridge') || id.includes('tunnel');
+          });
+
+        const BIG_WATER = ['in', ['get', 'class'], ['literal', ['river', 'lake', 'ocean', 'reservoir']]];
+        const SMALL_WATER = ['!', BIG_WATER];
+
+        // Маленькие водоёмы — просто синий
+        if (!map.getLayer('water-small')) {
+          map.addLayer({
+            id: 'water-small',
+            type: 'fill',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            filter: SMALL_WATER,
+            paint: { 'fill-color': '#7EC8E3', 'fill-opacity': 1 }
+          }, firstRoadLayer?.id);
+        }
+
+        // Тень у берега — только большая вода
+        if (!map.getLayer('water-shore-shadow')) {
+          map.addLayer({
+            id: 'water-shore-shadow',
+            type: 'line',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            filter: BIG_WATER,
+            minzoom: 12,
+            paint: {
+              'line-color': 'rgba(0, 20, 40, 0.35)',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 15, 14],
+              'line-blur':  ['interpolate', ['linear'], ['zoom'], 12, 3, 15, 10],
+            }
+          }, firstRoadLayer?.id);
+        }
+
+        // Текстура — только большая вода
+        if (!map.getLayer('water-texture-layer')) {
+          map.addLayer({
+            id: 'water-texture-layer',
+            type: 'fill',
+            source: 'maptiler_planet',
+            'source-layer': 'water',
+            filter: BIG_WATER,
+            paint: { 'fill-pattern': 'water-wave' }
+          }, firstRoadLayer?.id);
+        }
+      })
+      .catch(e => console.error('water texture error:', e));
+
+  });
 });
 
 // ── PLACES ───────────────────────────────────────
