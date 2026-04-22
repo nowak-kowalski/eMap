@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>eMap — Пермь</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800;900&family=Inconsolata:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 @font-face {
   font-family: 'Serpantin';
@@ -47,7 +48,7 @@ html, body {
   width: 100%; height: 100%;
   overflow: hidden;
   background: #D3A4EA;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* =====================
@@ -269,7 +270,7 @@ html, body {
   z-index: 650;
   display: flex;
   align-items: center;
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 900;
   font-size: 22px;
   letter-spacing: 1.5px;
@@ -291,7 +292,7 @@ html, body {
    ===================== */
 .badge {
   display: inline-flex; align-items: center;
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 10.5px;
   letter-spacing: 0.7px;
@@ -310,7 +311,7 @@ html, body {
 /* Left-pointing badge (for card overlays) */
 .badge-left {
   display: inline-flex; align-items: center;
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 10.5px;
   letter-spacing: 0.7px;
@@ -340,7 +341,7 @@ html, body {
 }
 
 .date-pill {
-  font-family: 'Inconsolata', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px; font-weight: 600;
   color: var(--text);
   background: rgba(0,0,0,0.07);
@@ -477,7 +478,7 @@ html, body {
 }
 
 .ecard-title {
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 13px;
   letter-spacing: -0.2px;
@@ -488,7 +489,7 @@ html, body {
 }
 
 .ecard-date-chip {
-  font-family: 'Inconsolata', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px; font-weight: 700;
   color: var(--text);
   background: rgba(0,0,0,0.07);
@@ -499,7 +500,7 @@ html, body {
 }
 
 .ecard-desc {
-  font-family: 'Inconsolata', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px;
   color: var(--muted);
   line-height: 1.4;
@@ -520,7 +521,7 @@ html, body {
 .ecard-venue { flex: 1; min-width: 0; }
 
 .venue-name {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   font-size: 11px;
   color: var(--text);
@@ -531,7 +532,7 @@ html, body {
 }
 
 .venue-addr {
-  font-family: 'Inconsolata', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   color: var(--muted);
   display: block;
@@ -546,7 +547,7 @@ html, body {
 }
 
 .price-tag {
-  font-family: 'Inconsolata', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11.5px; font-weight: 700;
   color: var(--text);
   background: rgba(0,0,0,0.055);
@@ -556,7 +557,7 @@ html, body {
 }
 
 .btn-map {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px; font-weight: 600;
   color: white;
   background: var(--pink);
@@ -576,7 +577,7 @@ html, body {
 .more-hint {
   text-align: center;
   padding: 6px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: var(--muted);
   flex-shrink: 0;
@@ -632,7 +633,7 @@ html, body {
 }
 .popup-type-badge {
   display: inline-block;
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 8.5px; font-weight: 700;
   color: white;
   padding: 4px 12px;
@@ -651,13 +652,13 @@ html, body {
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.25));
 }
 .popup-name {
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 700; font-size: 15px;
   color: var(--text);
   margin-bottom: 4px; line-height: 1.25;
 }
 .popup-venue {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px; color: var(--muted);
   margin-bottom: 14px;
 }
@@ -667,21 +668,21 @@ html, body {
   margin-bottom: 16px;
 }
 .popup-date-chip {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12.5px; font-weight: 600;
   color: var(--text);
   background: var(--chip-bg);
   padding: 5px 13px; border-radius: 20px;
 }
 .popup-price-tag {
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px; font-weight: 700;
   color: var(--text);
 }
 .popup-btn {
   display: block; width: 100%; box-sizing: border-box;
   background: var(--lavender); color: white;
-  font-family: 'Unbounded', sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px; font-weight: 700;
   text-align: center; padding: 15px;
   border-radius: 16px; text-decoration: none;
