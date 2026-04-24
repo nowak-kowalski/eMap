@@ -1480,5 +1480,230 @@ function filterChip(el, type) {
 // Fix map size on desktop frame
 setTimeout(() => map.resize(), 100);
 </script>
+
+<!-- ========== ONBOARDING ========== -->
+<div id="onboarding" class="ob-wrap">
+
+  <!-- Slides -->
+  <div class="ob-slides" id="obSlides">
+
+    <!-- 1: Приветствие -->
+    <div class="ob-slide">
+      <div class="ob-content ob-bottom-left">
+        <h1 class="ob-title">ПРИВЕТСТВИЕ</h1>
+        <p class="ob-sub">ДОПОЛНИТЕЛЬНАЯ<br>ИНФОРМАЦИЯ</p>
+      </div>
+      <div class="ob-hint">НУЖНА ИНСТРУКЦИЯ КАК<br>УСТАНОВИТЬ НА ЭКРАН</div>
+    </div>
+
+    <!-- 2: Гастробот -->
+    <div class="ob-slide">
+      <div class="ob-content ob-bottom-left">
+        <h1 class="ob-title">ЭТО<br>ГАСТРОБОТ</h1>
+        <p class="ob-sub">ТУТ ОПИСАНИЕ<br>ГАСТРОБОТА</p>
+      </div>
+    </div>
+
+    <!-- 3: Найдем место -->
+    <div class="ob-slide">
+      <div class="ob-content ob-bottom-left">
+        <h1 class="ob-title">НАЙДЕМ МЕСТО<br>ЗА 10 СЕКУНД</h1>
+        <p class="ob-sub">МОЖЕШЬ ИСКАТЬ КАК<br>ХОЧЕШЬ: СЛОВАМИ ИЛИ<br>КНОПКАМИ</p>
+      </div>
+    </div>
+
+    <!-- 4: Летсгоу -->
+    <div class="ob-slide ob-slide-last">
+      <div class="ob-content ob-center">
+        <h1 class="ob-title-last">ЛЕТСГОУ</h1>
+        <button class="ob-arrow" id="obArrow">→</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Dots (скрыты на последнем слайде) -->
+  <div class="ob-dots" id="obDots">
+    <span class="ob-dot active"></span>
+    <span class="ob-dot"></span>
+    <span class="ob-dot"></span>
+    <span class="ob-dot"></span>
+  </div>
+
+</div>
+
+<style>
+/* ========== ONBOARDING ========== */
+.ob-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Serpantin', 'JetBrains Mono', monospace;
+}
+
+.ob-wrap.hidden { display: none; }
+
+.ob-slides {
+  flex: 1;
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.ob-slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 32px 80px;
+}
+
+.ob-content.ob-bottom-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.ob-title {
+  font-size: clamp(32px, 8vw, 52px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: #111;
+  font-style: italic;
+}
+
+.ob-sub {
+  font-size: clamp(10px, 3vw, 13px);
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  color: #111;
+}
+
+.ob-hint {
+  font-size: clamp(9px, 2.5vw, 11px);
+  letter-spacing: 0.07em;
+  line-height: 1.6;
+  color: #111;
+  margin-top: 32px;
+}
+
+/* Последний слайд — по центру */
+.ob-slide-last {
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.ob-content.ob-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.ob-title-last {
+  font-size: clamp(28px, 8vw, 48px);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: #111;
+}
+
+.ob-arrow {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #F25A4A;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+  font-family: sans-serif;
+}
+
+.ob-arrow:active { transform: scale(0.93); background: #d44438; }
+
+/* Dots */
+.ob-dots {
+  position: absolute;
+  bottom: 28px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.ob-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: background 0.25s, width 0.25s;
+}
+
+.ob-dot.active {
+  background: #111;
+  width: 18px;
+  border-radius: 3px;
+}
+</style>
+
+<script>
+(function () {
+  const wrap    = document.getElementById('onboarding');
+  const slides  = document.getElementById('obSlides');
+  const dots    = document.querySelectorAll('.ob-dot');
+  const arrow   = document.getElementById('obArrow');
+  const TOTAL   = 4;
+  let cur = 0;
+  let startX = 0;
+
+  // Показываем только при первом посещении
+  if (localStorage.getItem('ob_done')) {
+    wrap.classList.add('hidden');
+    return;
+  }
+
+  function goTo(n) {
+    cur = Math.max(0, Math.min(TOTAL - 1, n));
+    slides.style.transform = `translateX(-${cur * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === cur));
+  }
+
+  // Свайп
+  wrap.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  wrap.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) goTo(cur + (dx < 0 ? 1 : -1));
+  });
+
+  // Клик по слайду (кроме кнопки)
+  slides.addEventListener('click', e => {
+    if (e.target === arrow || arrow.contains(e.target)) return;
+    if (cur < TOTAL - 1) goTo(cur + 1);
+  });
+
+  // Кнопка последнего слайда
+  arrow.addEventListener('click', () => {
+    localStorage.setItem('ob_done', '1');
+    wrap.classList.add('hidden');
+  });
+
+  goTo(0);
+})();
+</script>
+
 </body>
 </html>
