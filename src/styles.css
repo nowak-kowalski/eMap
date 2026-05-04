@@ -1047,6 +1047,7 @@ html, body {
 }
 
 .ss-tab-icon svg { width: 21px; height: 21px; }
+.ss-tab-icon img { width: 28px; height: 28px; object-fit: contain; transform: translateX(-2px); }
 
 .ss-tab-label {
   font-family: 'JetBrains Mono', monospace;
