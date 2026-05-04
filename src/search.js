@@ -2,6 +2,7 @@
   const wrap = document.getElementById('search-screen');
   const nav  = document.getElementById('ssNav');
   const tabs = nav.querySelectorAll('.ss-tab');
+  let enterTimer = null;
 
   function calcActiveWidth() {
     const innerW   = nav.clientWidth - 8;        // 4px padding × 2
@@ -39,6 +40,12 @@
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => activate(tab)));
+
+  document.getElementById('mapMenuButton')?.addEventListener('click', event => {
+    event.stopPropagation();
+    window.showSearchScreen();
+  });
+
   window.addEventListener('resize', () => {
     const active = nav.querySelector('.ss-tab--active');
     if (active) applyWidths(active);
@@ -46,9 +53,13 @@
 
   window.showSearchScreen = function () {
     wrap.classList.remove('ss-hidden');
-    const active = nav.querySelector('.ss-tab--active');
-    if (active) applyWidths(active);
+    const searchTab = nav.querySelector('[data-tab="search"]');
+    tabs.forEach(tab => tab.classList.toggle('ss-tab--active', tab === searchTab));
+    if (searchTab) applyWidths(searchTab);
+    clearTimeout(enterTimer);
     wrap.classList.add('ss-entering');
-    wrap.addEventListener('animationend', () => wrap.classList.remove('ss-entering'), { once: true });
+    enterTimer = setTimeout(() => {
+      wrap.classList.remove('ss-entering');
+    }, 1750);
   };
 })();
