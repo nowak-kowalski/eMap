@@ -46,6 +46,7 @@
 
     if (!ALWAYS_SHOW_ONBOARDING) localStorage.setItem('ob_done', '1');
     wrap.classList.add('hidden');
+    window.showSearchScreen && window.showSearchScreen();
   });
 
   goTo(0);

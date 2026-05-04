@@ -73,6 +73,77 @@
     </div>
   </div>
 
+  <!-- ========== SEARCH SCREEN ========== -->
+  <div id="search-screen" class="ss-wrap ss-hidden">
+
+    <div class="ss-body">
+      <h1 class="ss-heading">Че&nbsp;ищем?</h1>
+
+      <div class="ss-search-row">
+        <svg class="ss-icon-mg" viewBox="0 0 20 20" fill="none">
+          <circle cx="8.5" cy="8.5" r="5.5" fill="#F2A0A4" stroke="#2E2D2C" stroke-width="1.2"/>
+          <rect x="13.4" y="11.2" width="1.9" height="8" rx="0.9"
+            fill="white" stroke="#2E2D2C" stroke-width="1.1"
+            transform="rotate(-42 13.4 11.2)"/>
+        </svg>
+        <input class="ss-input" type="text" placeholder="поиск">
+        <button class="ss-submit">Искать</button>
+      </div>
+
+      <div class="ss-chips">
+        <button class="ss-chip">Поесть</button>
+        <button class="ss-chip">Выпить</button>
+        <button class="ss-chip">Что-то ещё</button>
+      </div>
+    </div>
+
+    <nav class="ss-nav" id="ssNav">
+
+      <button class="ss-tab ss-tab--active" data-tab="search">
+        <span class="ss-tab-icon">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="8.5" cy="8.5" r="5.5" fill="#F2A0A4" stroke="#2E2D2C" stroke-width="1.2"/>
+            <rect x="13.4" y="11.2" width="1.9" height="8" rx="0.9"
+              fill="white" stroke="#2E2D2C" stroke-width="1.1"
+              transform="rotate(-42 13.4 11.2)"/>
+          </svg>
+        </span>
+        <span class="ss-tab-label">Поиск</span>
+      </button>
+
+      <button class="ss-tab" data-tab="categories">
+        <span class="ss-tab-icon">
+          <svg viewBox="0 0 21 21" fill="none">
+            <path d="M0 15.75C0 18.6495 2.3505 21 5.25 21C8.1495 21 10.5 18.6495 10.5 15.75C10.5 18.6495 12.8505 21 15.75 21C18.6495 21 21 18.6495 21 15.75C21 12.8505 18.6495 10.5 15.75 10.5C18.6495 10.5 21 8.1495 21 5.25C21 2.3505 18.6495 0 15.75 0C12.8505 0 10.5 2.3505 10.5 5.25C10.5 2.3505 8.1495 0 5.25 0C2.3505 0 0 2.3505 0 5.25C0 8.1495 2.3505 10.5 5.25 10.5C2.3505 10.5 0 12.8505 0 15.75Z"
+              fill="#F2A0A4" stroke="#2E2D2C" stroke-width="1"/>
+          </svg>
+        </span>
+        <span class="ss-tab-label">Категории</span>
+      </button>
+
+      <button class="ss-tab" data-tab="map">
+        <span class="ss-tab-icon">
+          <svg viewBox="0 0 14 25" fill="none">
+            <circle cx="7" cy="7" r="5.5" fill="#F2A0A4" stroke="#2E2D2C" stroke-width="1"/>
+            <rect x="6.1" y="11.5" width="1.8" height="13" fill="white" stroke="#2E2D2C" stroke-width="1.1"/>
+          </svg>
+        </span>
+        <span class="ss-tab-label">Карта</span>
+      </button>
+
+      <button class="ss-tab" data-tab="friends">
+        <span class="ss-tab-icon">
+          <svg viewBox="0 0 27 23" fill="none">
+            <path d="M27 6.818C27 3.002 23.902 0 20.084 0C17.001 0 14.393 2.062 13.499 4.848C12.605 2.062 9.997 0.072 6.914 0.072C3.095 0.072 0 2.988 0 6.805C0 8.731 0.791 10.092 2.063 11.548L13.506 23L24.935 11.548C26.209 10.092 27 8.742 27 6.818Z"
+              fill="#F2A0A4" stroke="#2E2D2C" stroke-width="1"/>
+          </svg>
+        </span>
+        <span class="ss-tab-label">С другом</span>
+      </button>
+
+    </nav>
+  </div>
+
 </div><!-- /phone-frame -->
 
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.umd.min.js"></script>
@@ -144,6 +215,7 @@
 </div>
 
 
+<script src="src/search.js"></script>
 <script src="src/onboarding.js"></script>
 
 </body>
